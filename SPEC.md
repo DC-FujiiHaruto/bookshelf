@@ -140,19 +140,20 @@
 - 本の詳細ポップアップにも「登録から〇〇日」を表示
 
 ### 16. おすすめ本（レコメンデーション）
-- 読了した本の著者を基に「同じ著者の他の作品」を Google Books API で提案する
+- 読了した本の著者・ジャンルを分析し、Google Books API で関連作品を提案する
 - 本棚画面（`/bookshelf`）の棚エリア下部に「おすすめの本」セクションを表示
-  - セクション右上の「更新」ボタンで再取得可能（押すたびに別の著者の本が表示される）
+  - セクション右上の「更新」ボタンで再取得可能（押すたびに異なる著者・ジャンルの本が表示される）
   - 既に本棚に登録済みの本（`google_books_id` で照合）は除外して表示
-  - 表紙・タイトル・著者を横スクロールカードで最大10件表示
+  - 表紙・タイトル・著者を横スクロールカードで最大12件表示
   - カードをタップするとGoogle Books のページを新タブで開く
   - 読了本が0冊の場合は非表示
 - **レコメンドロジック**
-  - 読了本の著者一覧（重複除去）からランダムに1人選択
-  - API Route `/api/books/recommend` に著者名を渡し、サーバーサイドで `inauthor:著者名` クエリで Google Books API を呼び出す
+  - クライアント側で読了本の著者（上位3人）とジャンル（上位2つ）を出現頻度で集計
+  - 著者検索（`inauthor:著者名`）とジャンル検索（`subject:ジャンル`）を並行実行
+  - 生成された検索クエリの結果を統合し、重複を排除して返す（ジャンル未設定時は著者検索のみ、両方空なら単一フォールバッククエリを実行）
   - `langRestrict=ja` で日本語書籍に絞り込み
 - **コンポーネント**: `src/components/bookshelf/BookRecommendations.tsx`
-- **API Route**: `GET /api/books/recommend?author={著者名}&exclude={id1,id2}`
+- **API Route**: `GET /api/books/recommend?authors={著者1}&authors={著者2}&genres={ジャンル1}&exclude={id1,id2}`（著者・ジャンルは同名パラメータの繰り返しで送信）
 
 ### 17. 読書ヒートマップ（実装済み）
 - GitHub のコントリビューショングラフのように、今年1月1日〜12月31日の読書活動をカレンダー形式で可視化する
@@ -533,7 +534,7 @@ CREATE POLICY "reads_delete_own" ON book_reads FOR DELETE USING (user_id = auth.
 | メソッド | パス | 説明 |
 |---|---|---|
 | GET | `/api/books/search?q={query}` | Google Books API で本を検索して結果を返す |
-| GET | `/api/books/recommend?author={著者名}&exclude={id1,id2}` | 著者名でおすすめ本を最大10件返す（`inauthor:` 検索・日本語書籍限定） |
+| GET | `/api/books/recommend?authors={著者1,著者2}&genres={ジャンル1}&exclude={id1,id2}` | 著者×ジャンルの2軸並行検索でおすすめ本を最大12件返す（`inauthor:` + `subject:` 検索・日本語書籍限定） |
 
 > Google Books API キーはサーバーサイドの環境変数 `GOOGLE_BOOKS_API_KEY` から読み込む。クライアントには露出させない。
 

@@ -17,6 +17,18 @@ type Props = {
   readBooks: Book[]
 }
 
+function getTopItems(books: Book[], key: 'author' | 'genre', limit: number): string[] {
+  const counts = new Map<string, number>()
+  for (const book of books) {
+    const val = book[key]
+    if (val) counts.set(val, (counts.get(val) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([val]) => val)
+}
+
 export default function BookRecommendations({ readBooks }: Props) {
   const [books, setBooks] = useState<RecommendedBook[]>([])
   const [loading, setLoading] = useState(false)
@@ -24,24 +36,28 @@ export default function BookRecommendations({ readBooks }: Props) {
   const fetchRecommendations = useCallback(async () => {
     setLoading(true)
 
-    // 既読本の著者一覧（重複除去）をランダムに1人選ぶ → 「更新」のたびに違う著者の本が出る
-    const authors = [...new Set(readBooks.map((b) => b.author).filter(Boolean))]
-    const author = authors.length > 0 ? authors[Math.floor(Math.random() * authors.length)] : null
+    // 読書頻度が高い著者（上位3人）・ジャンル（上位2つ）を集計
+    const topAuthors = getTopItems(readBooks, 'author', 3)
+    const topGenres = getTopItems(readBooks, 'genre', 2)
 
-    // 既存の本を除外
     const excludeIds = readBooks
       .map((b) => b.google_books_id)
       .filter(Boolean)
       .join(',')
 
     const params = new URLSearchParams()
-    if (author) params.set('author', author)
+    for (const a of topAuthors) params.append('authors', a)
+    for (const g of topGenres) params.append('genres', g)
     if (excludeIds) params.set('exclude', excludeIds)
 
     try {
       const res = await fetch(`/api/books/recommend?${params}`)
+      if (!res.ok) {
+        setBooks([])
+        return
+      }
       const data = await res.json()
-      setBooks(data)
+      setBooks(Array.isArray(data) ? data : [])
     } catch {
       // エラー時は空のまま
     } finally {
@@ -51,7 +67,7 @@ export default function BookRecommendations({ readBooks }: Props) {
 
   useEffect(() => {
     if (readBooks.length > 0) fetchRecommendations()
-  }, [fetchRecommendations, readBooks.length])
+  }, [fetchRecommendations])
 
   if (readBooks.length === 0) return null
 
