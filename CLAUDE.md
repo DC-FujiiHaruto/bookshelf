@@ -80,6 +80,41 @@ npx tsc --noEmit   # 型チェック
 
 ---
 
+## ブランチ運用
+
+### ブランチ構成
+| ブランチ | 役割 |
+|---|---|
+| `main` | 本番環境（Vercel デプロイ対象） |
+| `stg` | ステージング（本番前の動作確認用） |
+| `develop` | 開発統合ブランチ（作業ブランチのマージ先） |
+
+### 新機能・修正の手順
+```bash
+# 1. develop から作業ブランチを切る
+git checkout develop
+git checkout -b feature/機能名
+
+# 2. 実装・コミット後、リモートにプッシュ
+git push -u origin feature/機能名
+
+# 3. GitHub で develop へ PR を作成してマージ
+# 4. 動作確認後 develop → stg → main の順でマージ
+```
+
+### ブランチ命名規則
+| 種類 | 例 |
+|---|---|
+| 新機能 | `feature/annual-reading-goal` |
+| バグ修正 | `fix/header-mobile-layout` |
+| 緊急修正 | `hotfix/auth-redirect` |
+
+### やってはいけないこと
+- **`main` に直接プッシュしない**
+- **`develop` をスキップして `main` にマージしない**
+
+---
+
 ## テスト方針
 
 現時点では自動テストは導入していない。実装後は以下を手動で確認する：
