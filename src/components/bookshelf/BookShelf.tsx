@@ -31,6 +31,7 @@ export default function BookShelf({ books: initialBooks, threshold }: Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), [])
 
   // ジャンル一覧
