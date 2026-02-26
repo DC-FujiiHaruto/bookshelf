@@ -10,28 +10,55 @@ type GoogleBooksItem = {
   }
 }
 
+async function fetchByQuery(q: string, apiKey: string): Promise<GoogleBooksItem[]> {
+  try {
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&langRestrict=ja&orderBy=relevance&key=${apiKey}`
+    const res = await fetch(url, { next: { revalidate: 3600 } })
+    if (!res.ok) return []
+    const json = await res.json()
+    return json.items ?? []
+  } catch {
+    return []
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const author = searchParams.get('author') ?? ''
+  const authors = searchParams.getAll('authors').filter(Boolean)
+  const genres = searchParams.getAll('genres').filter(Boolean)
   const excludeIds = new Set(searchParams.get('exclude')?.split(',').filter(Boolean) ?? [])
 
-  const apiKey = process.env.GOOGLE_BOOKS_API_KEY
+  const apiKey = process.env.GOOGLE_BOOKS_API_KEY ?? ''
 
-  // 著者名で inauthor: 検索 → 同じ著者の別作品を提案
-  const q = author ? `inauthor:${author}` : '小説'
+  // 著者リストからランダムに1人、ジャンルリストからランダムに1つ選ぶ（サーバー側でも上限を制限）
+  const limitedAuthors = authors.slice(0, 3)
+  const limitedGenres = genres.slice(0, 2)
+  const author = limitedAuthors.length > 0
+    ? limitedAuthors[Math.floor(Math.random() * limitedAuthors.length)]
+    : null
+  const genre = limitedGenres.length > 0
+    ? limitedGenres[Math.floor(Math.random() * limitedGenres.length)]
+    : null
 
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&langRestrict=ja&orderBy=relevance&key=${apiKey}`
+  // 著者検索・ジャンル検索を並行実行
+  const queries: string[] = []
+  if (author) queries.push(`inauthor:${author}`)
+  if (genre) queries.push(`subject:${genre}`)
+  if (queries.length === 0) queries.push('小説 日本')
 
-  const res = await fetch(url, { next: { revalidate: 3600 } })
-  if (!res.ok) {
-    return NextResponse.json({ error: 'Google Books API error' }, { status: 502 })
-  }
+  const results = await Promise.all(queries.map((q) => fetchByQuery(q, apiKey)))
+  const allItems = results.flat()
 
-  const json = await res.json()
-  const items: GoogleBooksItem[] = json.items ?? []
-
-  const results = items
-    .filter((item) => !excludeIds.has(item.id) && item.volumeInfo.title)
+  // 重複排除・除外済み本のフィルタリング
+  const seen = new Set<string>()
+  const filtered = allItems
+    .filter((item) => {
+      if (!item.volumeInfo?.title) return false
+      if (excludeIds.has(item.id)) return false
+      if (seen.has(item.id)) return false
+      seen.add(item.id)
+      return true
+    })
     .map((item) => ({
       google_books_id: item.id,
       title: item.volumeInfo.title ?? '',
@@ -41,7 +68,7 @@ export async function GET(request: Request) {
           ?.replace('http:', 'https:') ?? null,
       info_url: item.volumeInfo.infoLink ?? `https://books.google.com/books?id=${item.id}`,
     }))
-    .slice(0, 10)
+    .slice(0, 12)
 
-  return NextResponse.json(results)
+  return NextResponse.json(filtered)
 }
