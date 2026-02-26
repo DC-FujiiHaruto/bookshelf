@@ -1,0 +1,53 @@
+name: Create branch from issue
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create branch from issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const issueNumber = issue.number;
+
+            // タイトルをブランチ名に変換（英数字・ハイフン以外は除去）
+            const slug = issue.title
+              .toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .trim()
+              .replace(/[\s_]+/g, '-')
+              .slice(0, 40);
+
+            const branchName = `feature/issue-${issueNumber}-${slug}`;
+
+            // develop ブランチの最新 SHA を取得
+            const { data: develop } = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/develop',
+            });
+
+            // ブランチ作成
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/heads/${branchName}`,
+              sha: develop.object.sha,
+            });
+
+            // Issue にコメントを投稿
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `作業ブランチを作成しました。\n\n\`\`\`bash\ngit fetch origin\ngit checkout ${branchName}\n\`\`\``,
+            });
