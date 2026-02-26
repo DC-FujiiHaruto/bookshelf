@@ -1,65 +1,80 @@
-import Image from "next/image";
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { BookOpen, Timer, BarChart3, Users, BookMarked, Star } from 'lucide-react'
+import LoginButton from '@/components/ui/LoginButton'
 
-export default function Home() {
+const FEATURES = [
+  {
+    icon: BookMarked,
+    title: 'リアル本棚UI',
+    desc: '木製本棚に背表紙が並ぶ没入感',
+  },
+  {
+    icon: Timer,
+    title: '読書タイマー',
+    desc: '読書時間をセッションごとに記録',
+  },
+  {
+    icon: BarChart3,
+    title: '統計グラフ',
+    desc: '月別・ジャンル別に読書傾向を可視化',
+  },
+  {
+    icon: Users,
+    title: 'ソーシャル機能',
+    desc: 'フォローして他の読書家と繋がる',
+  },
+  {
+    icon: Star,
+    title: '感情タグ・評価',
+    desc: '読後の感情を細かく記録',
+  },
+  {
+    icon: BookOpen,
+    title: '積読アラート',
+    desc: '長期間未読の本をリマインド',
+  },
+]
+
+export default async function LandingPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    redirect('/bookshelf')
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-amber-950 flex flex-col items-center justify-center px-4 py-16">
+      {/* ロゴ＆キャッチコピー */}
+      <div className="text-center text-amber-100 mb-14">
+        <div className="flex items-center justify-center mb-5">
+          <div className="bg-amber-700/60 rounded-2xl p-4 shadow-lg ring-1 ring-amber-600/40">
+            <BookOpen className="w-14 h-14 text-amber-300" strokeWidth={1.5} />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <h1 className="text-5xl font-bold mb-3 tracking-tight">MyBookshelf</h1>
+        <p className="text-xl text-amber-300 mb-2">あなただけのリアル本棚</p>
+        <p className="text-amber-500 text-sm">
+          読んだ本を棚に並べて、読書の記録を残そう
+        </p>
+      </div>
+
+      {/* 機能グリッド */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-12 max-w-2xl w-full">
+        {FEATURES.map(({ icon: Icon, title, desc }) => (
+          <div
+            key={title}
+            className="bg-amber-900/40 border border-amber-800/50 rounded-xl p-4 hover:bg-amber-900/60 transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+            <Icon className="w-6 h-6 text-amber-400 mb-2" strokeWidth={1.5} />
+            <div className="font-semibold text-amber-100 text-sm mb-1">{title}</div>
+            <div className="text-amber-500 text-xs leading-relaxed">{desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <LoginButton />
+    </main>
+  )
 }
