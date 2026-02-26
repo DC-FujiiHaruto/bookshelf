@@ -97,6 +97,7 @@ npx tsc --noEmit   # 型チェック
 ## ブランチ運用
 
 ### ブランチ構成
+
 | ブランチ | 役割 |
 |---|---|
 | `main` | 本番環境（Vercel デプロイ対象） |
@@ -108,18 +109,20 @@ npx tsc --noEmit   # 型チェック
 # 1. Issue を作成（GitHub Actions が develop からブランチを自動作成）
 gh issue create --title "機能名" --body "詳細" --label "enhancement"
 
-# 2. 自動作成されたブランチに移動
+# 2. 自動作成されたブランチに移動（Issue の自動コメントに表示された名前を使う）
 git fetch origin
-git checkout feature/issue-{番号}-{機能名}
+git checkout feature/issue-{番号}-{slug}
+# 例: git checkout feature/issue-5-annual-reading-goal
 
 # 3. 実装・コミット・プッシュ
-git push origin feature/issue-{番号}-{機能名}
+git push origin feature/issue-{番号}-{slug}
 
 # 4. PR を作成（CodeRabbit が自動レビュー・ESLint が自動修正）
 gh pr create --base develop --title "..." --body "..."
 ```
 
 ### ブランチ命名規則
+
 | 種類 | 例 |
 |---|---|
 | 新機能 | `feature/issue-5-annual-reading-goal` |
@@ -135,6 +138,7 @@ gh pr create --base develop --title "..." --body "..."
 ## GitHub Actions / CI
 
 ### ワークフロー一覧
+
 | ファイル | トリガー | 内容 |
 |---|---|---|
 | `ci.yml` | push・PR | lint → 型チェック → ビルド |
@@ -147,6 +151,7 @@ gh pr create --base develop --title "..." --body "..."
 - ESLint の軽微なエラーは `auto-fix.yml` が自動修正、ロジック・設計の指摘は手動対応
 
 ### GitHub Secrets（要設定）
+
 | Secret 名 | 用途 |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | CI ビルド時の Supabase 接続 |
