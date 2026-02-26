@@ -46,14 +46,18 @@ export default function BookRecommendations({ readBooks }: Props) {
       .join(',')
 
     const params = new URLSearchParams()
-    if (topAuthors.length > 0) params.set('authors', topAuthors.join(','))
-    if (topGenres.length > 0) params.set('genres', topGenres.join(','))
+    for (const a of topAuthors) params.append('authors', a)
+    for (const g of topGenres) params.append('genres', g)
     if (excludeIds) params.set('exclude', excludeIds)
 
     try {
       const res = await fetch(`/api/books/recommend?${params}`)
+      if (!res.ok) {
+        setBooks([])
+        return
+      }
       const data = await res.json()
-      setBooks(data)
+      setBooks(Array.isArray(data) ? data : [])
     } catch {
       // エラー時は空のまま
     } finally {
@@ -63,7 +67,7 @@ export default function BookRecommendations({ readBooks }: Props) {
 
   useEffect(() => {
     if (readBooks.length > 0) fetchRecommendations()
-  }, [fetchRecommendations, readBooks.length])
+  }, [fetchRecommendations])
 
   if (readBooks.length === 0) return null
 

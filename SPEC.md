@@ -150,10 +150,10 @@
 - **レコメンドロジック**
   - クライアント側で読了本の著者（上位3人）とジャンル（上位2つ）を出現頻度で集計
   - 著者検索（`inauthor:著者名`）とジャンル検索（`subject:ジャンル`）を並行実行
-  - 2つの検索結果を統合・重複排除して返す
+  - 生成された検索クエリの結果を統合し、重複を排除して返す（ジャンル未設定時は著者検索のみ、両方空なら単一フォールバッククエリを実行）
   - `langRestrict=ja` で日本語書籍に絞り込み
 - **コンポーネント**: `src/components/bookshelf/BookRecommendations.tsx`
-- **API Route**: `GET /api/books/recommend?authors={著者1,著者2}&genres={ジャンル1}&exclude={id1,id2}`
+- **API Route**: `GET /api/books/recommend?authors={著者1}&authors={著者2}&genres={ジャンル1}&exclude={id1,id2}`（著者・ジャンルは同名パラメータの繰り返しで送信）
 
 ### 17. 読書ヒートマップ（実装済み）
 - GitHub のコントリビューショングラフのように、今年1月1日〜12月31日の読書活動をカレンダー形式で可視化する

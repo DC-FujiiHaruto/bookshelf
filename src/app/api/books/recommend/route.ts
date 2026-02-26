@@ -11,27 +11,33 @@ type GoogleBooksItem = {
 }
 
 async function fetchByQuery(q: string, apiKey: string): Promise<GoogleBooksItem[]> {
-  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&langRestrict=ja&orderBy=relevance&key=${apiKey}`
-  const res = await fetch(url, { next: { revalidate: 3600 } })
-  if (!res.ok) return []
-  const json = await res.json()
-  return json.items ?? []
+  try {
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&langRestrict=ja&orderBy=relevance&key=${apiKey}`
+    const res = await fetch(url, { next: { revalidate: 3600 } })
+    if (!res.ok) return []
+    const json = await res.json()
+    return json.items ?? []
+  } catch {
+    return []
+  }
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const authors = searchParams.get('authors')?.split(',').filter(Boolean) ?? []
-  const genres = searchParams.get('genres')?.split(',').filter(Boolean) ?? []
+  const authors = searchParams.getAll('authors').filter(Boolean)
+  const genres = searchParams.getAll('genres').filter(Boolean)
   const excludeIds = new Set(searchParams.get('exclude')?.split(',').filter(Boolean) ?? [])
 
   const apiKey = process.env.GOOGLE_BOOKS_API_KEY ?? ''
 
-  // 著者リストからランダムに1人、ジャンルリストからランダムに1つ選ぶ
-  const author = authors.length > 0
-    ? authors[Math.floor(Math.random() * Math.min(authors.length, 3))]
+  // 著者リストからランダムに1人、ジャンルリストからランダムに1つ選ぶ（サーバー側でも上限を制限）
+  const limitedAuthors = authors.slice(0, 3)
+  const limitedGenres = genres.slice(0, 2)
+  const author = limitedAuthors.length > 0
+    ? limitedAuthors[Math.floor(Math.random() * limitedAuthors.length)]
     : null
-  const genre = genres.length > 0
-    ? genres[Math.floor(Math.random() * Math.min(genres.length, 2))]
+  const genre = limitedGenres.length > 0
+    ? limitedGenres[Math.floor(Math.random() * limitedGenres.length)]
     : null
 
   // 著者検索・ジャンル検索を並行実行
