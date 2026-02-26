@@ -1,0 +1,26 @@
+language: ja
+early_access: false
+
+reviews:
+  auto_review:
+    enabled: true
+    base_branches:
+      - main
+      - stg
+      - develop
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  path_instructions:
+    - path: "src/app/api/**"
+      instructions: "APIルートのセキュリティ（認証チェック・入力バリデーション）を重点的に確認してください。"
+    - path: "src/components/**"
+      instructions: "React / Next.js のベストプラクティス、不要な再レンダリング、useEffect の依存配列を確認してください。"
+    - path: "src/lib/supabase/**"
+      instructions: "Supabase クライアントの使い分け（server/client）とRLSの抜け漏れを確認してください。"
+
+chat:
+  auto_reply: true

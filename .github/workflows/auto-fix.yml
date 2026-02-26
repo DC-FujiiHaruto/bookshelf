@@ -1,0 +1,40 @@
+name: Auto Fix
+
+on:
+  pull_request:
+    branches: [develop, stg, main]
+
+permissions:
+  contents: write
+
+jobs:
+  lint-fix:
+    name: ESLint auto-fix
+    runs-on: ubuntu-latest
+    # fork からの PR は secrets にアクセスできないためスキップ
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint --fix
+        run: npm run lint -- --fix
+        continue-on-error: true
+
+      - name: Commit fixes if any
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: auto-fix ESLint errors"
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com

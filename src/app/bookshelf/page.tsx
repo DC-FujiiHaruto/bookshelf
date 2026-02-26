@@ -6,7 +6,7 @@ import TsundokuBanner from '@/components/bookshelf/TsundokuBanner'
 import ReadingFAB from '@/components/bookshelf/ReadingFAB'
 import BookRecommendations from '@/components/bookshelf/BookRecommendations'
 import AppHeader from '@/components/ui/AppHeader'
-import type { Book, BookStatus } from '@/types/book'
+import type { BookStatus } from '@/types/book'
 
 type Props = {
   searchParams: Promise<{ status?: string }>

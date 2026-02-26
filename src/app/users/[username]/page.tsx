@@ -8,9 +8,6 @@ import type { Book } from '@/types/book'
 
 type Props = { params: Promise<{ username: string }> }
 
-const STATUS_LABEL: Record<string, string> = {
-  want_to_read: '積読', reading: '読中', read: '読了',
-}
 
 export default async function PublicProfilePage({ params }: Props) {
   const supabase = await createClient()
