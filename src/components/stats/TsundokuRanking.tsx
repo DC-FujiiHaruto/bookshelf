@@ -4,6 +4,7 @@ import type { Book } from '@/types/book'
 type Props = { books: Book[] }
 
 export default function TsundokuRanking({ books }: Props) {
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now()
 
   const ranked = books

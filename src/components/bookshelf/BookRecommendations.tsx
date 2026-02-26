@@ -51,7 +51,7 @@ export default function BookRecommendations({ readBooks }: Props) {
 
   useEffect(() => {
     if (readBooks.length > 0) fetchRecommendations()
-  }, [fetchRecommendations])
+  }, [fetchRecommendations, readBooks.length])
 
   if (readBooks.length === 0) return null
 
